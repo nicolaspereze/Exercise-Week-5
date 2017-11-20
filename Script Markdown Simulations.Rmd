@@ -13,7 +13,7 @@ $$X_i \sim \mathcal{N}(0,\,1)$$
 
 ```{r, echo=TRUE}
 set.seed(116)
-observations<-80
+observations<-200
 samples<-100
 datasets<-replicate(samples,rnorm(observations,mean=0,sd=1))
 ```
