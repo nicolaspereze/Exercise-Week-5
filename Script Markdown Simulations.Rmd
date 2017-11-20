@@ -1,0 +1,67 @@
+---
+title: "Exercise week 4"
+author: "Nicolas Perez"
+date: "November 2017"
+output: html_document
+---
+
+## Sampling from a normal distribution
+
+In the following simulation, we sample a total of 100 samples from a standard normal distribution and 80 observations per sample. We define $X_i$ as the i-th sample (i=1,2...,100) of the random variable $X$ 
+
+$$X_i \sim \mathcal{N}(0,\,1)$$
+
+```{r, echo=TRUE}
+set.seed(116)
+observations<-80
+samples<-100
+datasets<-replicate(samples,rnorm(observations,mean=0,sd=1))
+```
+
+## Summarizing the results
+
+For every sampled $X_i$, we compute: 1) absolute bias, 2) standard error, 3) 95% CI Lower Bound and 4) 95% CI Upper bound.
+
+For computing the measures of interest we use the following formulas
+
+$$ bias=|\bar{x}-\mu|$$
+Since the population mean is $0$, then the absolute bias can be measured by the absolute value of the mean value of the $i$-th sample.
+
+$$ bias=|\bar{x}|$$
+For the standard error we use the estimated standard deviation of the sample and we adjust by the square root of the number of observations
+
+$$ S.E=\hat{\sigma} / \sqrt{n}$$
+Finally for the 95% Confidence Intervals, we use the 2.5% and 97.5% quantiles of the normal distribution (it can be shown that the sample mean follows such a distribution but is not part of this exercise) and we build the CI as:
+
+$$ CI_{95\%}= [\bar{x} - 1.96*S.E, \bar{x} + 1.96*S.E] $$
+
+```{r, echo=TRUE}
+results<-matrix(NA,nrow=5,ncol=samples)
+results[1,]<-abs(colMeans(datasets)-0)
+results[2,]<-apply(X=datasets,MARGIN=2,FUN=sd)/sqrt(observations)
+results[3,]<-colMeans(datasets)+results[2,]*-1.96
+results[4,]<-colMeans(datasets)+results[2,]*1.96
+results[5,]<-ifelse((results[4,]<0 | results[3,]>0),1,0)
+```
+
+## Including Plots
+
+We can make a plot of the Confidence Intervals containing the true population value for the mean, and given the definition of coverage probabilities for the CIs by Neyman, approximately we should encounter 95% of the CIs to contain the population value for the mean ($0$). 
+
+```{r, echo=TRUE}
+plot(c(1:samples),results[3,],type="l", lty=3, ylim=c(-0.6,0.6), main="Coverage Graph, (95% CI)", 
+     xlab="sample", ylab="Value")
+lines(c(1:samples),results[4,],type="l", lty=3)
+abline(h=0, col="blue")
+lines(which(results[5,]==1),colMeans(datasets[,results[5,]==1]), type="p", pch=16, col="red")
+text(x=1:samples, y=0.07+colMeans(datasets), labels=ifelse(results[5,]==1,c(1:samples),""), col="red") 
+```
+
+To create a table we only need to subsample the datasets that are plotted in the graph (already identified through a rule of being or not in the CIs when the results table was created).
+
+```{r, echo=TRUE}
+library(knitr)
+dataNC<-data.frame(datasets[,results[5,]==1])
+colnames(dataNC)<-paste("Sample ", which(results[5,]==1))
+kable(dataNC, caption = "Simulated samples that don't cover the population mean")
+```
